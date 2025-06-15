@@ -231,6 +231,9 @@ async function loadSubtopics() {
     const level = document.getElementById('level').value;
     
     if (category && level) {
+        const container = document.getElementById('subtopicsContainer');
+        container.innerHTML = '<p class="text-muted"><i class="fas fa-spinner fa-spin"></i> Loading subtopics...</p>';
+        
         try {
             const response = await fetch('/get_subtopics', {
                 method: 'POST',
@@ -240,12 +243,25 @@ async function loadSubtopics() {
                 body: JSON.stringify({ category, level })
             });
             
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const data = await response.json();
             subtopics = data.subtopics;
             
             displaySubtopics(subtopics);
         } catch (error) {
             console.error('Error loading subtopics:', error);
+            container.innerHTML = '<p class="text-danger">Error loading subtopics. Using defaults.</p>';
+            // Use fallback subtopics
+            const fallbackSubtopics = [
+                `${category} Basics`,
+                `${category} Fundamentals`,
+                `${category} Applications`,
+                `${category} Best Practices`
+            ];
+            displaySubtopics(fallbackSubtopics);
         }
     }
 }
@@ -310,6 +326,10 @@ async function startQuiz() {
             })
         });
         
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
         
         if (data.success) {
@@ -317,10 +337,14 @@ async function startQuiz() {
             document.getElementById('loading').classList.add('d-none');
             document.getElementById('quizInterface').classList.remove('d-none');
             loadCurrentQuestion();
+        } else {
+            throw new Error('Failed to start quiz');
         }
     } catch (error) {
         console.error('Error starting quiz:', error);
-        alert('Error starting quiz. Please try again.');
+        document.getElementById('loading').classList.add('d-none');
+        document.querySelector('.card').classList.remove('d-none');
+        alert('Error starting quiz. Please check your internet connection and try again.');
     }
 }
 

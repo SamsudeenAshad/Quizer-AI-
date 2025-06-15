@@ -50,20 +50,42 @@ def get_subtopics():
     level = data.get('level')
     
     # Generate subtopics based on category using Gemini AI
-    prompt = f"Generate 8-10 specific subtopics for {category} at {level} level. Return only a JSON array of strings."
+    if model:
+        prompt = f"Generate 8-10 specific subtopics for {category} at {level} level. Return only a JSON array of strings without any additional text or formatting."
+        
+        try:
+            response = model.generate_content(prompt)
+            response_text = response.text.strip()
+            
+            # Clean the response text to ensure it's valid JSON
+            if response_text.startswith('```json'):
+                response_text = response_text.replace('```json', '').replace('```', '').strip()
+            elif response_text.startswith('```'):
+                response_text = response_text.replace('```', '').strip()
+                
+            subtopics = json.loads(response_text)
+            
+            # Validate that it's a list of strings
+            if isinstance(subtopics, list) and all(isinstance(item, str) for item in subtopics):
+                return jsonify({'subtopics': subtopics})
+            else:
+                raise ValueError("Invalid response format from AI")
+                
+        except Exception as e:
+            print(f"Error generating subtopics: {e}")
+            # Fall through to fallback
     
-    try:
-        response = model.generate_content(prompt)
-        subtopics = json.loads(response.text)
-    except:
-        # Fallback subtopics if AI fails
-        subtopics = [
-            f"{category} Basics",
-            f"{category} Fundamentals",
-            f"{category} Concepts",
-            f"{category} Applications",
-            f"{category} Theory"
-        ]
+    # Fallback subtopics if AI fails or is not available
+    subtopics = [
+        f"{category} Basics",
+        f"{category} Fundamentals", 
+        f"{category} Concepts",
+        f"{category} Applications",
+        f"{category} Theory",
+        f"Advanced {category}",
+        f"{category} Best Practices",
+        f"{category} Case Studies"
+    ]
     
     return jsonify({'subtopics': subtopics})
 
@@ -96,32 +118,72 @@ def generate_questions(config):
     
     subtopics_str = ', '.join(subtopics)
     
-    prompt = f"""
-    Generate {count} multiple choice questions about {title} in the {category} category at {level} level.
-    Focus on these subtopics: {subtopics_str}
-    
-    Return a JSON array where each question object has:
-    - question: the question text
-    - options: array of 4 options (A, B, C, D)
-    - correct_answer: the correct option letter (A, B, C, or D)
-    - explanation: detailed explanation of why the answer is correct
-    
-    Make sure questions are varied and cover different subtopics.
-    """
-    
-    try:
-        response = model.generate_content(prompt)
-        questions = json.loads(response.text)
-    except Exception as e:
-        # Fallback questions if AI fails
-        questions = [
-            {
-                "question": f"Sample question about {title}?",
-                "options": ["Option A", "Option B", "Option C", "Option D"],
-                "correct_answer": "A",
-                "explanation": "This is a sample explanation."
-            }
+    if model:
+        prompt = f"""
+        Generate exactly {count} multiple choice questions about {title} in the {category} category at {level} level.
+        Focus on these subtopics: {subtopics_str}
+        
+        Return ONLY a JSON array with no additional text, where each question object has exactly these fields:
+        - question: the question text
+        - options: array of exactly 4 options as strings
+        - correct_answer: the correct option letter (A, B, C, or D)
+        - explanation: detailed explanation of why the answer is correct
+        
+        Make sure questions are varied and cover different subtopics.
+        Example format:
+        [
+          {{
+            "question": "What is...",
+            "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
+            "correct_answer": "A",
+            "explanation": "This is correct because..."
+          }}
         ]
+        """
+        
+        try:
+            response = model.generate_content(prompt)
+            response_text = response.text.strip()
+            
+            # Clean the response text
+            if response_text.startswith('```json'):
+                response_text = response_text.replace('```json', '').replace('```', '').strip()
+            elif response_text.startswith('```'):
+                response_text = response_text.replace('```', '').strip()
+            
+            questions = json.loads(response_text)
+            
+            # Validate the structure
+            if isinstance(questions, list) and len(questions) > 0:
+                valid_questions = []
+                for q in questions:
+                    if (isinstance(q, dict) and 
+                        'question' in q and 'options' in q and 
+                        'correct_answer' in q and 'explanation' in q and
+                        isinstance(q['options'], list) and len(q['options']) == 4):
+                        valid_questions.append(q)
+                
+                if len(valid_questions) > 0:
+                    return valid_questions[:count]  # Ensure we don't exceed requested count
+                    
+        except Exception as e:
+            print(f"Error generating questions: {e}")
+            # Fall through to fallback
+    
+    # Fallback questions if AI fails or is not available
+    questions = []
+    for i in range(count):
+        questions.append({
+            "question": f"Sample question {i+1} about {title}?",
+            "options": [
+                f"Sample option A for {category}",
+                f"Sample option B for {category}", 
+                f"Sample option C for {category}",
+                f"Sample option D for {category}"
+            ],
+            "correct_answer": "A",
+            "explanation": f"This is a sample explanation for question {i+1} about {title}."
+        })
     
     return questions
 
@@ -194,6 +256,10 @@ def quiz_results():
                          score=quiz_config['score'],
                          total=len(session.get('questions', [])),
                          answers=quiz_config['answers'])
+
+@app.route('/favicon.ico')
+def favicon():
+    return '', 204  # Return empty response with "No Content" status
 
 if __name__ == '__main__':
     app.run(debug=True)
