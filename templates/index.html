@@ -243,25 +243,20 @@ async function loadSubtopics() {
                 body: JSON.stringify({ category, level })
             });
             
+            const data = await response.json();
+            
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error(data.error || `HTTP error! status: ${response.status}`);
             }
             
-            const data = await response.json();
             subtopics = data.subtopics;
-            
             displaySubtopics(subtopics);
         } catch (error) {
             console.error('Error loading subtopics:', error);
-            container.innerHTML = '<p class="text-danger">Error loading subtopics. Using defaults.</p>';
-            // Use fallback subtopics
-            const fallbackSubtopics = [
-                `${category} Basics`,
-                `${category} Fundamentals`,
-                `${category} Applications`,
-                `${category} Best Practices`
-            ];
-            displaySubtopics(fallbackSubtopics);
+            container.innerHTML = `<div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i> Error: ${error.message}
+                <br><small>Please check your AI configuration and try again.</small>
+            </div>`;
         }
     }
 }
@@ -326,11 +321,11 @@ async function startQuiz() {
             })
         });
         
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
         const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || `HTTP error! status: ${response.status}`);
+        }
         
         if (data.success) {
             totalQuestions = data.total_questions;
@@ -342,9 +337,16 @@ async function startQuiz() {
         }
     } catch (error) {
         console.error('Error starting quiz:', error);
-        document.getElementById('loading').classList.add('d-none');
-        document.querySelector('.card').classList.remove('d-none');
-        alert('Error starting quiz. Please check your internet connection and try again.');
+        document.getElementById('loading').innerHTML = `
+            <div class="alert alert-danger">
+                <h5><i class="fas fa-exclamation-triangle"></i> Error Starting Quiz</h5>
+                <p>${error.message}</p>
+                <p><small>Please check your AI configuration and internet connection, then try again.</small></p>
+                <button class="btn btn-primary" onclick="location.reload()">
+                    <i class="fas fa-refresh"></i> Retry
+                </button>
+            </div>
+        `;
     }
 }
 
