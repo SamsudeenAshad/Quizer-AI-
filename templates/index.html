@@ -163,56 +163,10 @@ let subtopics = [];
 let currentQuestionIndex = 0;
 let totalQuestions = 0;
 
-function nextStep(step) {
-    if (validateStep(currentStep)) {
-        document.getElementById(`step${currentStep}`).classList.add('d-none');
-        document.getElementById(`step${step}`).classList.remove('d-none');
-        currentStep = step;
-        
-        if (step === 2) {
-            loadCategoriesAndLevels();
-        } else if (step === 4) {
-            updateQuizSummary();
-        }
-    }
-}
-
-function prevStep(step) {
-    document.getElementById(`step${currentStep}`).classList.add('d-none');
-    document.getElementById(`step${step}`).classList.remove('d-none');
-    currentStep = step;
-}
-
-function validateStep(step) {
-    switch(step) {
-        case 1:
-            const title = document.getElementById('quizTitle').value.trim();
-            if (!title) {
-                alert('Please enter a quiz title or topic.');
-                return false;
-            }
-            return true;
-        case 2:
-            const category = document.getElementById('category').value;
-            const level = document.getElementById('level').value;
-            if (!category || !level) {
-                alert('Please select both category and level.');
-                return false;
-            }
-            return true;
-        case 3:
-            const selectedSubtopics = Array.from(document.querySelectorAll('input[name="subtopic"]:checked'));
-            if (selectedSubtopics.length === 0) {
-                alert('Please select at least one subtopic.');
-                return false;
-            }
-            return true;
-        default:
-            return true;
-    }
-}
+// Using enhanced navigation functions - see below for implementations
 
 async function loadCategoriesAndLevels() {
+    console.log('Loading categories and levels...');
     try {
         const response = await fetch('/get_categories', {
             method: 'POST',
@@ -224,23 +178,70 @@ async function loadCategoriesAndLevels() {
             })
         });
         
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
+        console.log('Received data:', data);
+        
         categories = data.categories;
         levels = data.levels;
         
+        console.log('Categories:', categories);
+        console.log('Levels:', levels);
+        
         populateSelect('category', Object.keys(categories), 'Select a category...');
         populateSelect('level', levels, 'Select level...');
-    } catch (error) {
-        console.error('Error loading categories:', error);
+        
+        console.log('Dropdowns populated successfully');
+    } catch (error) {        console.error('Error loading categories:', error);
+        // Show user-friendly error and load fallback data
+        const categorySelect = document.getElementById('category');
+        const levelSelect = document.getElementById('level');
+        
+        // Load fallback data
+        loadFallbackData();
+    }
+}
+
+function loadFallbackData() {
+    console.log('Loading fallback data...');
+    
+    // Fallback categories and levels
+    const fallbackCategories = {
+        'Science': ['Physics', 'Chemistry', 'Biology', 'Mathematics'],
+        'Technology': ['Programming', 'AI/ML', 'Web Development', 'Cybersecurity'],
+        'History': ['World History', 'Ancient Civilizations', 'Modern History', 'Wars'],
+        'Literature': ['English Literature', 'World Literature', 'Poetry', 'Drama'],
+        'Geography': ['Physical Geography', 'Political Geography', 'Climate', 'Countries'],
+        'Other': ['General Knowledge', 'Miscellaneous', 'Current Events']
+    };
+    
+    const fallbackLevels = ['Beginner', 'Intermediate', 'Advanced'];
+    
+    categories = fallbackCategories;
+    levels = fallbackLevels;
+    
+    populateSelect('category', Object.keys(fallbackCategories), 'Select a category...');
+    populateSelect('level', fallbackLevels, 'Select level...');
     }
 }
 
 function populateSelect(selectId, options, placeholder) {
+    console.log(`Populating ${selectId} with options:`, options);
     const select = document.getElementById(selectId);
+    if (!select) {
+        console.error(`Element with id '${selectId}' not found`);
+        return;
+    }
+    
     select.innerHTML = `<option value="">${placeholder}</option>`;
     options.forEach(option => {
         select.innerHTML += `<option value="${option}">${option}</option>`;
     });
+    
+    console.log(`${selectId} now has ${select.options.length} options`);
 }
 
 async function loadSubtopics() {
@@ -461,7 +462,7 @@ function nextQuestion() {
 
 // Enhanced interactive functions
 function updateQuizSummary() {
-    const topic = document.getElementById('topic').value;
+    const topic = document.getElementById('quizTitle').value;
     const category = document.getElementById('category').value;
     const level = document.getElementById('level').value;
     const mcqCount = document.getElementById('mcqCount').value;
@@ -531,8 +532,11 @@ function updateDifficultyIndicator(level) {
 
 // Enhanced form interactions
 document.addEventListener('DOMContentLoaded', function() {
+    // Load fallback data immediately when page loads
+    loadFallbackData();
+    
     // Add change listeners for real-time updates
-    const formElements = ['topic', 'category', 'level', 'mcqCount'];
+    const formElements = ['quizTitle', 'category', 'level', 'mcqCount'];
     formElements.forEach(id => {
         const element = document.getElementById(id);
         if (element) {
@@ -553,10 +557,9 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeInteractiveElements();
 });
 
-function initializeInteractiveElements() {
-    // Add tooltips to form elements
+function initializeInteractiveElements() {    // Add tooltips to form elements
     const tooltipElements = [
-        { id: 'topic', text: 'Enter the main subject you want to be quizzed on' },
+        { id: 'quizTitle', text: 'Enter the main subject you want to be quizzed on' },
         { id: 'category', text: 'Choose a category that best fits your topic' },
         { id: 'level', text: 'Select your expertise level for appropriate difficulty' },
         { id: 'mcqCount', text: 'Choose how many questions you want in your quiz' }
@@ -664,10 +667,9 @@ function validateCurrentStep() {
     if (!currentStep) return true;
     
     const stepId = currentStep.id;
-    
-    switch(stepId) {
+      switch(stepId) {
         case 'step1':
-            const topic = document.getElementById('topic').value.trim();
+            const topic = document.getElementById('quizTitle').value.trim();
             if (!topic) {
                 showValidationError('Please enter a topic for your quiz');
                 return false;
