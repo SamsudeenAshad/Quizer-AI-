@@ -72,16 +72,27 @@
                     </div>
                 </div>                <!-- Step 4: Quiz Settings -->
                 <div id="step4" class="quiz-step d-none">
-                    <h4><i class="fas fa-cog"></i> Step 4: Final Quiz Settings</h4>
-                    <div class="row">
+                    <h4><i class="fas fa-cog"></i> Step 4: Final Quiz Settings</h4>                    <div class="row">
                         <div class="col-md-6">
                             <label for="mcqCount" class="form-label">Number of Questions</label>
-                            <select class="form-select" id="mcqCount">
-                                <option value="5">5 Questions</option>
-                                <option value="10" selected>10 Questions</option>
-                                <option value="15">15 Questions</option>
-                                <option value="20">20 Questions</option>
+                            <select class="form-select interactive-element" id="mcqCount" onchange="updateQuizSummary()">
+                                <option value="5">5 Questions (Quick Quiz)</option>
+                                <option value="10" selected>10 Questions (Standard)</option>
+                                <option value="15">15 Questions (Extended)</option>
+                                <option value="20">20 Questions (Comprehensive)</option>
                             </select>
+                            <div class="form-text">
+                                <i class="fas fa-clock"></i> Estimated time: <span id="estimatedTime">~10 minutes</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Quiz Difficulty Preview</label>
+                            <div class="difficulty-preview">
+                                <div class="difficulty-bar">
+                                    <div id="difficultyIndicator" class="difficulty-fill"></div>
+                                </div>
+                                <span id="difficultyText" class="difficulty-text">Standard Level</span>
+                            </div>
                         </div>
                     </div>
                     <div class="mt-4">
@@ -446,6 +457,347 @@ async function submitAnswer() {
 function nextQuestion() {
     document.getElementById('questionContainer').classList.remove('d-none');
     loadCurrentQuestion();
+}
+
+// Enhanced interactive functions
+function updateQuizSummary() {
+    const topic = document.getElementById('topic').value;
+    const category = document.getElementById('category').value;
+    const level = document.getElementById('level').value;
+    const mcqCount = document.getElementById('mcqCount').value;
+    
+    // Update estimated time
+    const estimatedMinutes = Math.ceil(mcqCount * 1.2);
+    document.getElementById('estimatedTime').textContent = `~${estimatedMinutes} minutes`;
+    
+    // Update difficulty indicator
+    updateDifficultyIndicator(level);
+    
+    // Update quiz summary
+    const summary = `
+        <div class="summary-grid">
+            <div class="summary-item">
+                <i class="fas fa-bullseye text-primary"></i>
+                <strong>Topic:</strong> ${topic || 'Not specified'}
+            </div>
+            <div class="summary-item">
+                <i class="fas fa-tag text-info"></i>
+                <strong>Category:</strong> ${category || 'Not selected'}
+            </div>
+            <div class="summary-item">
+                <i class="fas fa-signal text-warning"></i>
+                <strong>Level:</strong> ${level || 'Not selected'}
+            </div>
+            <div class="summary-item">
+                <i class="fas fa-question-circle text-success"></i>
+                <strong>Questions:</strong> ${mcqCount}
+            </div>
+        </div>
+    `;
+    document.getElementById('quizSummary').innerHTML = summary;
+}
+
+function updateDifficultyIndicator(level) {
+    const indicator = document.getElementById('difficultyIndicator');
+    const text = document.getElementById('difficultyText');
+    
+    let width = '50%';
+    let color = '#ffc107';
+    let textContent = 'Standard Level';
+    
+    switch(level) {
+        case 'beginner':
+            width = '33%';
+            color = '#28a745';
+            textContent = 'Beginner Level';
+            break;
+        case 'intermediate':
+            width = '66%';
+            color = '#ffc107';
+            textContent = 'Intermediate Level';
+            break;
+        case 'advanced':
+            width = '100%';
+            color = '#dc3545';
+            textContent = 'Advanced Level';
+            break;
+    }
+    
+    indicator.style.width = width;
+    indicator.style.backgroundColor = color;
+    indicator.style.transition = 'all 0.5s ease';
+    text.textContent = textContent;
+}
+
+// Enhanced form interactions
+document.addEventListener('DOMContentLoaded', function() {
+    // Add change listeners for real-time updates
+    const formElements = ['topic', 'category', 'level', 'mcqCount'];
+    formElements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('change', updateQuizSummary);
+            element.addEventListener('input', updateQuizSummary);
+        }
+    });
+    
+    // Add loading animation to form submissions
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            showLoadingScreen('Generating your personalized quiz...');
+        });
+    }
+    
+    // Initialize tooltips and interactive elements
+    initializeInteractiveElements();
+});
+
+function initializeInteractiveElements() {
+    // Add tooltips to form elements
+    const tooltipElements = [
+        { id: 'topic', text: 'Enter the main subject you want to be quizzed on' },
+        { id: 'category', text: 'Choose a category that best fits your topic' },
+        { id: 'level', text: 'Select your expertise level for appropriate difficulty' },
+        { id: 'mcqCount', text: 'Choose how many questions you want in your quiz' }
+    ];
+    
+    tooltipElements.forEach(item => {
+        const element = document.getElementById(item.id);
+        if (element) {
+            element.setAttribute('data-tooltip', item.text);
+            element.classList.add('interactive-element');
+        }
+    });
+    
+    // Add smooth scrolling to step navigation
+    const stepButtons = document.querySelectorAll('.btn');
+    stepButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            setTimeout(() => {
+                const activeStep = document.querySelector('.quiz-step:not(.d-none)');
+                if (activeStep) {
+                    smoothScrollTo(activeStep);
+                }
+            }, 100);
+        });
+    });
+}
+
+// Enhanced step navigation with animations
+function nextStep(step) {
+    // Validate current step
+    if (!validateCurrentStep()) {
+        return;
+    }
+    
+    // Hide current step with animation
+    const currentStep = document.querySelector('.quiz-step:not(.d-none)');
+    if (currentStep) {
+        currentStep.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => {
+            currentStep.classList.add('d-none');
+            showStep(step);
+        }, 300);
+    } else {
+        showStep(step);
+    }
+}
+
+function prevStep(step) {
+    const currentStep = document.querySelector('.quiz-step:not(.d-none)');
+    if (currentStep) {
+        currentStep.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => {
+            currentStep.classList.add('d-none');
+            showStep(step);
+        }, 300);
+    } else {
+        showStep(step);
+    }
+}
+
+function showStep(step) {
+    const stepElement = document.getElementById(`step${step}`);
+    if (stepElement) {
+        stepElement.classList.remove('d-none');
+        stepElement.style.animation = 'fadeIn 0.5s ease';
+        
+        // Update step progress
+        updateStepProgress(step);
+        
+        // Smooth scroll to step
+        setTimeout(() => {
+            smoothScrollTo(stepElement);
+        }, 100);
+    }
+}
+
+function updateStepProgress(currentStep) {
+    const totalSteps = 4;
+    const progress = (currentStep / totalSteps) * 100;
+    
+    const progressBar = document.querySelector('.progress-bar');
+    if (progressBar) {
+        progressBar.style.width = progress + '%';
+        progressBar.style.transition = 'width 0.5s ease';
+    }
+    
+    // Update step indicators
+    for (let i = 1; i <= totalSteps; i++) {
+        const indicator = document.querySelector(`.step-${i}`);
+        if (indicator) {
+            if (i < currentStep) {
+                indicator.classList.add('completed');
+            } else if (i === currentStep) {
+                indicator.classList.add('active');
+                indicator.classList.remove('completed');
+            } else {
+                indicator.classList.remove('active', 'completed');
+            }
+        }
+    }
+}
+
+function validateCurrentStep() {
+    const currentStep = document.querySelector('.quiz-step:not(.d-none)');
+    if (!currentStep) return true;
+    
+    const stepId = currentStep.id;
+    
+    switch(stepId) {
+        case 'step1':
+            const topic = document.getElementById('topic').value.trim();
+            if (!topic) {
+                showValidationError('Please enter a topic for your quiz');
+                return false;
+            }
+            break;
+        case 'step2':
+            const category = document.getElementById('category').value;
+            const level = document.getElementById('level').value;
+            if (!category || !level) {
+                showValidationError('Please select both category and difficulty level');
+                return false;
+            }
+            break;
+    }
+    
+    return true;
+}
+
+function showValidationError(message) {
+    // Create a temporary alert
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-warning alert-dismissible fade show position-fixed';
+    alert.style.top = '20px';
+    alert.style.right = '20px';
+    alert.style.zIndex = '9999';
+    alert.innerHTML = `
+        <i class="fas fa-exclamation-triangle"></i> ${message}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+    `;
+    
+    document.body.appendChild(alert);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
+        }
+    }, 5000);
+}
+
+// Enhanced quiz submission with animations
+async function submitAnswer() {
+    const selectedAnswer = document.querySelector('input[name="answer"]:checked');
+    
+    if (!selectedAnswer) {
+        showValidationError('Please select an answer before submitting');
+        return;
+    }
+    
+    // Add loading state to submit button
+    const submitBtn = document.querySelector('.btn[onclick="submitAnswer()"]');
+    if (submitBtn) {
+        submitBtn.classList.add('loading');
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+        submitBtn.disabled = true;
+    }
+    
+    // Add selection animation
+    const selectedOption = selectedAnswer.closest('.quiz-option');
+    if (selectedOption) {
+        selectedOption.style.animation = 'pulse 0.5s ease';
+    }
+    
+    try {
+        const response = await fetch('/submit_answer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                answer: selectedAnswer.value
+            })
+        });
+        
+        const data = await response.json();
+        
+        // Animate the result reveal
+        setTimeout(() => {
+            showAnswerResult(data, selectedOption);
+        }, 1000);
+        
+    } catch (error) {
+        console.error('Error submitting answer:', error);
+        showValidationError('Error submitting answer. Please try again.');
+        
+        // Reset submit button
+        if (submitBtn) {
+            submitBtn.classList.remove('loading');
+            submitBtn.innerHTML = '<i class="fas fa-check"></i> Submit Answer';
+            submitBtn.disabled = false;
+        }
+    }
+}
+
+function showAnswerResult(data, selectedOption) {
+    // Apply result styling to selected option
+    if (selectedOption) {
+        if (data.is_correct) {
+            selectedOption.classList.add('correct');
+            celebrateCorrectAnswer();
+        } else {
+            selectedOption.classList.add('incorrect');
+        }
+    }
+    
+    // Show result with animation
+    const resultAlert = document.getElementById('resultAlert');
+    const resultTitle = document.getElementById('resultTitle');
+    const explanation = document.getElementById('explanation');
+    
+    if (data.is_correct) {
+        resultAlert.className = 'alert alert-success';
+        resultTitle.innerHTML = '<i class="fas fa-check-circle"></i> Excellent! That\'s correct!';
+    } else {
+        resultAlert.className = 'alert alert-danger';
+        resultTitle.innerHTML = `<i class="fas fa-times-circle"></i> Not quite right. The correct answer is ${data.correct_answer}.`;
+    }
+    
+    explanation.textContent = data.explanation;
+    
+    // Animate transition
+    const questionContainer = document.getElementById('questionContainer');
+    const answerResult = document.getElementById('answerResult');
+    
+    questionContainer.style.animation = 'fadeOut 0.5s ease';
+    setTimeout(() => {
+        questionContainer.classList.add('d-none');
+        answerResult.classList.remove('d-none');
+        answerResult.style.animation = 'fadeIn 0.5s ease';
+    }, 500);
 }
 </script>
 {% endblock %}

@@ -3,75 +3,119 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <div class="card shadow-lg">
-            <div class="card-header bg-success text-white">
-                <h2 class="mb-0"><i class="fas fa-trophy"></i> Quiz Results</h2>
+        <div class="card shadow-lg results-card">
+            <div class="card-header results-header">
+                <h2 class="mb-0 animate-text"><i class="fas fa-trophy"></i> Quiz Results</h2>
             </div>
             <div class="card-body text-center">
-                <div class="mb-4">
-                    <h1 class="display-4 text-primary">{{ score }}/{{ total }}</h1>
-                    <h3>
-                        {% set percentage = (score / total * 100) | round %}
+                <!-- Score Display with Animation -->
+                <div class="mb-4 score-display">
+                    <div class="score-circle">
+                        <div class="score-inner">
+                            <h1 class="display-4 score-number" data-score="{{ score }}" data-total="{{ total }}">0/{{ total }}</h1>
+                            <div class="score-percentage">
+                                {% set percentage = (score / total * 100) | round %}
+                                <span class="percentage-number" data-percentage="{{ percentage }}">0</span>%
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="achievement-badge">
                         {% if percentage >= 80 %}
-                            <span class="text-success">Excellent! 🎉</span>
+                            <div class="badge-excellent">
+                                <i class="fas fa-star"></i>
+                                <span>Excellent! 🎉</span>
+                            </div>
                         {% elif percentage >= 60 %}
-                            <span class="text-warning">Good Job! 👍</span>
+                            <div class="badge-good">
+                                <i class="fas fa-thumbs-up"></i>
+                                <span>Good Job! 👍</span>
+                            </div>
                         {% else %}
-                            <span class="text-danger">Keep Practicing! 📚</span>
+                            <div class="badge-practice">
+                                <i class="fas fa-book"></i>
+                                <span>Keep Practicing! 📚</span>
+                            </div>
                         {% endif %}
-                    </h3>
-                    <p class="lead">You scored {{ percentage }}%</p>
+                    </div>
                 </div>
 
-                <div class="progress mb-4" style="height: 30px;">
-                    <div class="progress-bar 
-                        {% if percentage >= 80 %}bg-success
-                        {% elif percentage >= 60 %}bg-warning
-                        {% else %}bg-danger{% endif %}" 
-                        role="progressbar" 
-                        style="width: {{ percentage }}%"
-                        aria-valuenow="{{ percentage }}" 
-                        aria-valuemin="0" 
-                        aria-valuemax="100">
-                        {{ percentage }}%
+                <!-- Animated Progress Bar -->
+                <div class="progress-container mb-4">
+                    <div class="progress-bar-wrapper">
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill 
+                                {% if percentage >= 80 %}success
+                                {% elif percentage >= 60 %}warning
+                                {% else %}danger{% endif %}" 
+                                data-width="{{ percentage }}%">
+                                <span class="progress-text">{{ percentage }}%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Metrics -->
+                <div class="performance-metrics">
+                    <div class="metric-card">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <div class="metric-value">{{ score }}</div>
+                        <div class="metric-label">Correct</div>
+                    </div>
+                    <div class="metric-card">
+                        <i class="fas fa-times-circle text-danger"></i>
+                        <div class="metric-value">{{ total - score }}</div>
+                        <div class="metric-label">Incorrect</div>
+                    </div>
+                    <div class="metric-card">
+                        <i class="fas fa-percentage text-primary"></i>
+                        <div class="metric-value">{{ percentage }}</div>
+                        <div class="metric-label">Accuracy</div>
                     </div>
                 </div>
 
                 <!-- Detailed Results -->
-                <div class="text-start">
-                    <h4><i class="fas fa-list"></i> Detailed Results</h4>
-                    <div class="accordion" id="resultsAccordion">
+                <div class="text-start detailed-results">
+                    <h4 class="section-title"><i class="fas fa-list"></i> Detailed Results</h4>
+                    <div class="accordion results-accordion" id="resultsAccordion">
                         {% for answer in answers %}
                         {% set i = loop.index0 %}
-                        <div class="accordion-item">
+                        <div class="accordion-item result-item" data-index="{{ i }}">
                             <h2 class="accordion-header" id="heading{{ i }}">
                                 <button class="accordion-button collapsed" type="button" 
                                         data-bs-toggle="collapse" data-bs-target="#collapse{{ i }}" 
                                         aria-expanded="false" aria-controls="collapse{{ i }}">
-                                    <span class="me-2">
-                                        {% if answer.is_correct %}
-                                            <i class="fas fa-check-circle text-success"></i>
-                                        {% else %}
-                                            <i class="fas fa-times-circle text-danger"></i>
-                                        {% endif %}
-                                    </span>
-                                    Question {{ loop.index }}: {{ answer.question[:60] }}...
+                                    <div class="question-summary">
+                                        <span class="question-icon">
+                                            {% if answer.is_correct %}
+                                                <i class="fas fa-check-circle text-success"></i>
+                                            {% else %}
+                                                <i class="fas fa-times-circle text-danger"></i>
+                                            {% endif %}
+                                        </span>
+                                        <span class="question-number">Q{{ loop.index }}</span>
+                                        <span class="question-preview">{{ answer.question[:60] }}...</span>
+                                    </div>
                                 </button>
                             </h2>
                             <div id="collapse{{ i }}" class="accordion-collapse collapse" 
                                  aria-labelledby="heading{{ i }}" data-bs-parent="#resultsAccordion">
                                 <div class="accordion-body">
-                                    <p><strong>Question:</strong> {{ answer.question }}</p>
-                                    <p><strong>Your Answer:</strong> 
-                                        <span class="{% if answer.is_correct %}text-success{% else %}text-danger{% endif %}">
-                                            {{ answer.selected }}
-                                        </span>
-                                    </p>
-                                    {% if not answer.is_correct %}
-                                    <p><strong>Correct Answer:</strong> 
-                                        <span class="text-success">{{ answer.correct }}</span>
-                                    </p>
-                                    {% endif %}
+                                    <div class="question-detail">
+                                        <p class="question-text"><strong>Question:</strong> {{ answer.question }}</p>
+                                        <p class="answer-text">
+                                            <strong>Your Answer:</strong> 
+                                            <span class="answer-value {% if answer.is_correct %}text-success{% else %}text-danger{% endif %}">
+                                                {{ answer.selected }}
+                                            </span>
+                                        </p>
+                                        {% if not answer.is_correct %}
+                                        <p class="correct-answer-text">
+                                            <strong>Correct Answer:</strong> 
+                                            <span class="correct-value text-success">{{ answer.correct }}</span>
+                                        </p>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -79,11 +123,15 @@
                     </div>
                 </div>
 
-                <div class="mt-4">
-                    <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg">
+                <!-- Action Buttons -->
+                <div class="action-buttons mt-4">
+                    <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg action-btn">
                         <i class="fas fa-redo"></i> Take Another Quiz
                     </a>
-                    <button class="btn btn-secondary btn-lg ms-2" onclick="window.print()">
+                    <button class="btn btn-secondary btn-lg action-btn ms-2" onclick="shareResults()">
+                        <i class="fas fa-share"></i> Share Results
+                    </button>
+                    <button class="btn btn-outline-primary btn-lg action-btn ms-2" onclick="window.print()">
                         <i class="fas fa-print"></i> Print Results
                     </button>
                 </div>
@@ -92,11 +140,482 @@
     </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    animateResults();
+    initializeResultsInteractions();
+});
+
+function animateResults() {
+    // Animate score counting
+    animateScore();
+    
+    // Animate progress bar
+    setTimeout(() => {
+        animateProgressBar();
+    }, 1000);
+    
+    // Animate result items
+    setTimeout(() => {
+        animateResultItems();
+    }, 1500);
+}
+
+function animateScore() {
+    const scoreElement = document.querySelector('.score-number');
+    const percentageElement = document.querySelector('.percentage-number');
+    
+    if (scoreElement && percentageElement) {
+        const finalScore = parseInt(scoreElement.dataset.score);
+        const finalTotal = parseInt(scoreElement.dataset.total);
+        const finalPercentage = parseInt(percentageElement.dataset.percentage);
+        
+        animateCounter(scoreElement, 0, finalScore, 1500, (current) => `${current}/${finalTotal}`);
+        animateCounter(percentageElement, 0, finalPercentage, 1500);
+    }
+}
+
+function animateProgressBar() {
+    const progressFill = document.querySelector('.progress-bar-fill');
+    if (progressFill) {
+        const targetWidth = progressFill.dataset.width;
+        progressFill.style.width = targetWidth;
+        progressFill.style.transition = 'width 1.5s cubic-bezier(0.4, 0, 0.2, 1)';
+    }
+}
+
+function animateResultItems() {
+    const items = document.querySelectorAll('.result-item');
+    items.forEach((item, index) => {
+        setTimeout(() => {
+            item.style.animation = 'slideInUp 0.5s ease forwards';
+        }, index * 100);
+    });
+}
+
+function animateCounter(element, start, end, duration, formatter = null) {
+    const startTime = performance.now();
+    
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easeProgress = 1 - Math.pow(1 - progress, 3); // Ease out cubic
+        
+        const current = Math.round(start + (end - start) * easeProgress);
+        element.textContent = formatter ? formatter(current) : current;
+        
+        if (progress < 1) {
+            requestAnimationFrame(update);
+        }
+    }
+    
+    requestAnimationFrame(update);
+}
+
+function initializeResultsInteractions() {
+    // Add hover effects to metric cards
+    const metricCards = document.querySelectorAll('.metric-card');
+    metricCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px) scale(1.05)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+    
+    // Add accordion animation
+    const accordionButtons = document.querySelectorAll('.accordion-button');
+    accordionButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-bs-target');
+            const targetElement = document.querySelector(targetId);
+            
+            if (targetElement) {
+                setTimeout(() => {
+                    if (!this.classList.contains('collapsed')) {
+                        targetElement.querySelector('.accordion-body').style.animation = 'fadeInUp 0.3s ease';
+                    }
+                }, 100);
+            }
+        });
+    });
+}
+
+function shareResults() {
+    const score = document.querySelector('.score-number').textContent;
+    const percentage = document.querySelector('.percentage-number').textContent;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: 'My Quiz Results',
+            text: `I just scored ${score} (${percentage}%) on a Quizer AI quiz!`,
+            url: window.location.href
+        }).catch(console.error);
+    } else {
+        // Fallback: copy to clipboard
+        const text = `I just scored ${score} (${percentage}%) on a Quizer AI quiz! Try it yourself at ${window.location.origin}`;
+        navigator.clipboard.writeText(text).then(() => {
+            showNotification('Results copied to clipboard!');
+        }).catch(() => {
+            showNotification('Unable to share results');
+        });
+    }
+}
+
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #28a745;
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        z-index: 9999;
+        animation: slideInRight 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+</script>
+
 <style>
+/* Results Page Specific Styles */
+.results-card {
+    border: none;
+    border-radius: 20px;
+    overflow: hidden;
+    animation: fadeInScale 0.8s ease;
+}
+
+.results-header {
+    background: var(--primary-gradient);
+    border: none;
+    padding: 2rem;
+}
+
+.animate-text {
+    animation: slideInDown 0.6s ease;
+}
+
+.score-display {
+    margin: 2rem 0;
+}
+
+.score-circle {
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 2rem;
+    position: relative;
+    background: var(--primary-gradient);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    animation: bounceIn 0.8s ease;
+}
+
+.score-inner {
+    text-align: center;
+    color: white;
+}
+
+.score-number {
+    font-weight: 800;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.score-percentage {
+    font-size: 1.2rem;
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+.achievement-badge {
+    margin-top: 1rem;
+}
+
+.badge-excellent,
+.badge-good,
+.badge-practice {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    animation: fadeInUp 1s ease;
+}
+
+.badge-excellent {
+    background: var(--success-gradient);
+    color: white;
+}
+
+.badge-good {
+    background: var(--warning-gradient);
+    color: white;
+}
+
+.badge-practice {
+    background: var(--secondary-gradient);
+    color: white;
+}
+
+.progress-container {
+    padding: 0 2rem;
+}
+
+.progress-bar-wrapper {
+    position: relative;
+}
+
+.progress-bar-bg {
+    height: 40px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 20px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.progress-bar-fill.success {
+    background: var(--success-gradient);
+}
+
+.progress-bar-fill.warning {
+    background: var(--warning-gradient);
+}
+
+.progress-bar-fill.danger {
+    background: var(--secondary-gradient);
+}
+
+.progress-text {
+    position: absolute;
+    right: 1rem;
+    color: white;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.performance-metrics {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+}
+
+.metric-card {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    min-width: 120px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.metric-card i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.metric-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.detailed-results {
+    margin-top: 3rem;
+}
+
+.section-title {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: var(--text-primary);
+}
+
+.results-accordion .accordion-item {
+    border: none;
+    border-radius: 12px !important;
+    margin-bottom: 1rem;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.results-accordion .accordion-button {
+    background: transparent;
+    border: none;
+    padding: 1.25rem;
+    border-radius: 12px !important;
+    transition: all 0.3s ease;
+}
+
+.results-accordion .accordion-button:not(.collapsed) {
+    background: rgba(102, 126, 234, 0.1);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.question-summary {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+}
+
+.question-icon {
+    font-size: 1.2rem;
+}
+
+.question-number {
+    font-weight: 600;
+    color: var(--text-primary);
+    min-width: 40px;
+}
+
+.question-preview {
+    flex: 1;
+    color: var(--text-secondary);
+}
+
+.question-detail {
+    padding: 1rem 0;
+}
+
+.question-text,
+.answer-text,
+.correct-answer-text {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.answer-value,
+.correct-value {
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.action-buttons {
+    padding: 2rem;
+}
+
+.action-btn {
+    transition: all 0.3s ease;
+    border-radius: 12px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Enhanced Keyframes */
+@keyframes fadeInScale {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes bounceIn {
+    0% { transform: scale(0.3); opacity: 0; }
+    50% { transform: scale(1.05); }
+    70% { transform: scale(0.9); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slideInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
 @media print {
-    .btn, .navbar {
+    .btn, .navbar, .action-buttons {
         display: none !important;
+    }
+    
+    .results-card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .performance-metrics {
+        gap: 1rem;
+    }
+    
+    .metric-card {
+        min-width: 100px;
+        padding: 1rem;
+    }
+    
+    .score-circle {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .action-btn {
+        margin: 0.5rem 0;
+        width: 100%;
     }
 }
 </style>
+
+{% endblock %}
 {% endblock %}
