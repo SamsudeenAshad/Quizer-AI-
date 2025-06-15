@@ -15,8 +15,7 @@
                         <input type="text" class="form-control" id="quizTitle" 
                                placeholder="Enter your main topic (e.g., 'Python Programming', 'World War II', 'Machine Learning')">
                         <div class="form-text">This will be the primary focus of your quiz questions.</div>
-                    </div>
-                    <button class="btn btn-primary" onclick="nextStep(2)">
+                    </div>                    <button class="btn btn-primary" onclick="nextStep(2)">
                         <i class="fas fa-arrow-right"></i> Continue
                     </button>
                 </div>
@@ -162,6 +161,104 @@ let levels = [];
 let subtopics = [];
 let currentQuestionIndex = 0;
 let totalQuestions = 0;
+
+// Enhanced step navigation with animations
+function nextStep(step) {
+    console.log(`nextStep called with step: ${step}`);
+    
+    // Simple validation first
+    if (step === 2) {
+        const topic = document.getElementById('quizTitle').value.trim();
+        if (!topic) {
+            alert('Please enter a topic for your quiz');
+            return;
+        }
+    }
+    
+    console.log('Basic validation passed, proceeding to next step');
+    
+    // Simple step switching without complex animations for now
+    const currentStepElement = document.querySelector('.quiz-step:not(.d-none)');
+    if (currentStepElement) {
+        currentStepElement.classList.add('d-none');
+    }
+    
+    const nextStepElement = document.getElementById(`step${step}`);
+    if (nextStepElement) {
+        nextStepElement.classList.remove('d-none');
+    }
+    
+    // Handle step-specific logic
+    if (step === 2) {
+        loadCategoriesAndLevels();
+    } else if (step === 4) {
+        updateQuizSummary();
+    }
+    
+    // Update global currentStep variable
+    currentStep = step;
+    console.log(`Global currentStep updated to: ${currentStep}`);
+}
+
+function prevStep(step) {
+    const currentStepElement = document.querySelector('.quiz-step:not(.d-none)');
+    if (currentStepElement) {
+        currentStepElement.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => {
+            currentStepElement.classList.add('d-none');
+            showStep(step);
+        }, 300);
+    } else {
+        showStep(step);
+    }
+    
+    // Update global currentStep variable
+    currentStep = step;
+}
+
+function showStep(step) {
+    const stepElement = document.getElementById(`step${step}`);
+    if (stepElement) {
+        stepElement.classList.remove('d-none');
+        stepElement.style.animation = 'fadeIn 0.5s ease';
+        
+        // Update step progress
+        updateStepProgress(step);
+        
+        // Smooth scroll to step
+        setTimeout(() => {
+            if (typeof smoothScrollTo === 'function') {
+                smoothScrollTo(stepElement);
+            }
+        }, 100);
+    }
+}
+
+function updateStepProgress(currentStep) {
+    const totalSteps = 4;
+    const progress = (currentStep / totalSteps) * 100;
+    
+    const progressBar = document.querySelector('.progress-bar');
+    if (progressBar) {
+        progressBar.style.width = progress + '%';
+        progressBar.style.transition = 'width 0.5s ease';
+    }
+    
+    // Update step indicators
+    for (let i = 1; i <= totalSteps; i++) {
+        const indicator = document.querySelector(`.step-${i}`);
+        if (indicator) {
+            if (i < currentStep) {
+                indicator.classList.add('completed');
+            } else if (i === currentStep) {
+                indicator.classList.add('active');
+                indicator.classList.remove('completed');
+            } else {
+                indicator.classList.remove('active', 'completed');
+            }
+        }
+    }
+}
 
 // Using enhanced navigation functions - see below for implementations
 
@@ -460,6 +557,17 @@ function nextQuestion() {
     loadCurrentQuestion();
 }
 
+// Smooth scroll enhancements
+function smoothScrollTo(element) {
+    if (element) {
+        element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'nearest'
+        });
+    }
+}
+
 // Enhanced interactive functions
 function updateQuizSummary() {
     const topic = document.getElementById('quizTitle').value;
@@ -587,89 +695,24 @@ function initializeInteractiveElements() {    // Add tooltips to form elements
     });
 }
 
-// Enhanced step navigation with animations
-function nextStep(step) {
-    // Validate current step
-    if (!validateCurrentStep()) {
-        return;
-    }
-    
-    // Hide current step with animation
-    const currentStep = document.querySelector('.quiz-step:not(.d-none)');
-    if (currentStep) {
-        currentStep.style.animation = 'fadeOut 0.3s ease';
-        setTimeout(() => {
-            currentStep.classList.add('d-none');
-            showStep(step);
-        }, 300);
-    } else {
-        showStep(step);
-    }
-}
-
-function prevStep(step) {
-    const currentStep = document.querySelector('.quiz-step:not(.d-none)');
-    if (currentStep) {
-        currentStep.style.animation = 'fadeOut 0.3s ease';
-        setTimeout(() => {
-            currentStep.classList.add('d-none');
-            showStep(step);
-        }, 300);
-    } else {
-        showStep(step);
-    }
-}
-
-function showStep(step) {
-    const stepElement = document.getElementById(`step${step}`);
-    if (stepElement) {
-        stepElement.classList.remove('d-none');
-        stepElement.style.animation = 'fadeIn 0.5s ease';
-        
-        // Update step progress
-        updateStepProgress(step);
-        
-        // Smooth scroll to step
-        setTimeout(() => {
-            smoothScrollTo(stepElement);
-        }, 100);
-    }
-}
-
-function updateStepProgress(currentStep) {
-    const totalSteps = 4;
-    const progress = (currentStep / totalSteps) * 100;
-    
-    const progressBar = document.querySelector('.progress-bar');
-    if (progressBar) {
-        progressBar.style.width = progress + '%';
-        progressBar.style.transition = 'width 0.5s ease';
-    }
-    
-    // Update step indicators
-    for (let i = 1; i <= totalSteps; i++) {
-        const indicator = document.querySelector(`.step-${i}`);
-        if (indicator) {
-            if (i < currentStep) {
-                indicator.classList.add('completed');
-            } else if (i === currentStep) {
-                indicator.classList.add('active');
-                indicator.classList.remove('completed');
-            } else {
-                indicator.classList.remove('active', 'completed');
-            }
-        }
-    }
-}
-
 function validateCurrentStep() {
-    const currentStep = document.querySelector('.quiz-step:not(.d-none)');
-    if (!currentStep) return true;
+    console.log('validateCurrentStep called');
     
-    const stepId = currentStep.id;
-      switch(stepId) {
+    const currentStepElement = document.querySelector('.quiz-step:not(.d-none)');
+    console.log('Current step element for validation:', currentStepElement);
+    
+    if (!currentStepElement) {
+        console.log('No current step element found, returning true');
+        return true;
+    }
+    
+    const stepId = currentStepElement.id;
+    console.log('Step ID:', stepId);
+    
+    switch(stepId) {
         case 'step1':
             const topic = document.getElementById('quizTitle').value.trim();
+            console.log('Topic value:', topic);
             if (!topic) {
                 showValidationError('Please enter a topic for your quiz');
                 return false;
@@ -678,13 +721,23 @@ function validateCurrentStep() {
         case 'step2':
             const category = document.getElementById('category').value;
             const level = document.getElementById('level').value;
+            console.log('Category:', category, 'Level:', level);
             if (!category || !level) {
                 showValidationError('Please select both category and difficulty level');
                 return false;
             }
             break;
+        case 'step3':
+            const selectedSubtopics = Array.from(document.querySelectorAll('input[name="subtopic"]:checked'));
+            console.log('Selected subtopics:', selectedSubtopics);
+            if (selectedSubtopics.length === 0) {
+                showValidationError('Please select at least one subtopic');
+                return false;
+            }
+            break;
     }
     
+    console.log('Validation passed');
     return true;
 }
 
