@@ -1176,134 +1176,392 @@ html {
     transform: translateY(-1px);
 }
 
-/* Enhanced Animations */
-@keyframes floatShape {
-    0% { transform: translateY(0px) rotate(0deg); }
-    25% { transform: translateY(-20px) rotate(90deg); }
-    50% { transform: translateY(0px) rotate(180deg); }
-    75% { transform: translateY(-15px) rotate(270deg); }
-    100% { transform: translateY(0px) rotate(360deg); }
+/* GitHub Banner and Integration Styles */
+
+/* GitHub Banner */
+.github-banner {
+    background: linear-gradient(135deg, #24292e 0%, #1a1e22 100%);
+    color: white;
+    padding: 1rem 0;
+    border-bottom: 3px solid #f79f43;
+    position: relative;
+    overflow: hidden;
 }
 
-@keyframes slideInRight {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
-
-/* Responsive Enhancements */
-@media (max-width: 768px) {
-    .brand-tagline {
-        display: none;
-    }
-    
-    .footer-content {
-        grid-template-columns: 1fr;
-        text-align: center;
-    }
-    
-    .social-links {
-        justify-content: center;
-    }
-    
-    .flash-messages {
-        left: 20px;
-        right: 20px;
-        max-width: none;
-    }
-    
-    .scroll-top-btn {
-        bottom: 20px;
-        right: 20px;
-        width: 45px;
-        height: 45px;
-    }
-}
-
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-    .modern-navbar {
-        background: rgba(45, 55, 72, 0.95) !important;
-        border-bottom-color: rgba(255, 255, 255, 0.1);
-    }
-    
-    .brand-logo {
-        color: white !important;
-    }
-    
-    .modern-navbar .nav-link {
-        color: rgba(255, 255, 255, 0.8) !important;
-    }
-    
-    .modern-navbar .nav-link:hover {
-        color: #667eea !important;
-    }
-}
-
-/* Loading Screen Enhancement */
-#initialLoading {
-    position: fixed;
+.github-banner::before {
+    content: '';
+    position: absolute;
     top: 0;
-    left: 0;
+    left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    animation: bannerShine 3s infinite;
+}
+
+.github-banner-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.creator-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.creator-avatar {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #f79f43 0%, #ff6b35 100%);
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 99999;
-}
-
-#initialLoading .loading-content {
-    text-align: center;
+    font-size: 1.5rem;
     color: white;
+    box-shadow: 0 4px 15px rgba(247, 159, 67, 0.3);
+    animation: avatarPulse 2s infinite;
 }
 
-#initialLoading .loading-spinner {
-    border-top-color: white;
+.creator-details {
+    display: flex;
+    flex-direction: column;
 }
 
-#initialLoading .loading-text {
-    color: rgba(255, 255, 255, 0.9);
+.creator-name {
     font-size: 1.1rem;
-    font-weight: 500;
+    font-weight: 600;
+    margin: 0;
 }
 
-/* Accessibility Improvements */
+.creator-name strong {
+    color: #f79f43;
+}
+
+.creator-tagline {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0;
+}
+
+.github-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.github-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+.github-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.github-btn:hover::before {
+    left: 100%;
+}
+
+.github-btn:hover {
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.github-repo {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+}
+
+.github-fork {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    border-color: #f093fb;
+}
+
+.github-star {
+    background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+    border-color: #fdcb6e;
+    color: #2d3436;
+}
+
+.github-star:hover {
+    color: #2d3436;
+}
+
+.github-count {
+    background: rgba(255, 255, 255, 0.9);
+    color: #2d3436;
+    padding: 0.15rem 0.4rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* GitHub Navigation Dropdown */
+.github-nav {
+    position: relative;
+}
+
+.github-dropdown {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    padding: 0.5rem 0;
+    min-width: 280px;
+    animation: dropdownSlideIn 0.3s ease;
+}
+
+.github-item {
+    padding: 0;
+}
+
+.github-profile {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.github-profile:hover {
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.github-profile i {
+    font-size: 1.5rem;
+    color: #24292e;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-info strong {
+    color: #2d3748;
+    font-weight: 600;
+}
+
+.profile-info small {
+    color: #718096;
+    font-size: 0.8rem;
+}
+
+.github-action {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    color: #4a5568;
+    transition: all 0.3s ease;
+}
+
+.github-action:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+}
+
+.github-action i {
+    width: 16px;
+    text-align: center;
+}
+
+/* Footer GitHub Integration */
+.creator-credit {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.creator-credit p {
+    margin: 0.25rem 0;
+    font-size: 0.9rem;
+}
+
+.creator-credit a {
+    color: #f79f43;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.creator-credit a:hover {
+    color: #ff6b35;
+}
+
+.github-footer-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.footer-github-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    padding: 0.25rem 0;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.footer-github-btn:hover {
+    color: #f79f43;
+    transform: translateX(3px);
+}
+
+.footer-github-btn i {
+    width: 16px;
+    text-align: center;
+}
+
+/* Enhanced Animations */
+@keyframes bannerShine {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+@keyframes avatarPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes dropdownSlideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInDown {
+    from { transform: translateY(-100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Responsive GitHub Banner */
+@media (max-width: 768px) {
+    .github-banner-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
+    }
+    
+    .creator-info {
+        justify-content: center;
+    }
+    
+    .github-actions {
+        justify-content: center;
+        width: 100%;
+    }
+    
+    .github-btn {
+        flex: 1;
+        justify-content: center;
+        min-width: 100px;
+    }
+    
+    .github-dropdown {
+        min-width: 250px;
+    }
+}
+
+@media (max-width: 576px) {
+    .github-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .github-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .creator-name {
+        font-size: 1rem;
+    }
+    
+    .creator-tagline {
+        font-size: 0.8rem;
+    }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .github-banner {
+        background: black;
+        border-bottom-color: yellow;
+    }
+    
+    .github-btn {
+        border: 2px solid white;
+    }
+    
+    .github-count {
+        background: white;
+        color: black;
+        border: 1px solid black;
+    }
+}
+
+/* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
-    .shape {
+    .github-banner::before,
+    .creator-avatar {
         animation: none;
     }
     
-    .floating-particle {
+    .github-btn::before {
         display: none;
     }
-    
-    * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
 }
 
-/* Focus Styles for Accessibility */
-.modern-navbar .nav-link:focus,
-.scroll-top-btn:focus {
-    outline: 2px solid #667eea;
-    outline-offset: 2px;
-}
-
-/* High Contrast Mode Support */
-@media (prefers-contrast: high) {
-    .modern-navbar {
-        background: white !important;
-        border-bottom: 2px solid black;
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+    .github-dropdown {
+        background: rgba(45, 55, 72, 0.95);
+        border-color: rgba(255, 255, 255, 0.2);
     }
     
-    .brand-logo {
-        color: black !important;
+    .github-profile:hover,
+    .github-action:hover {
+        background: rgba(102, 126, 234, 0.2);
     }
     
-    .modern-navbar .nav-link {
-        color: black !important;
+    .profile-info strong {
+        color: white;
+    }
+    
+    .github-action {
+        color: rgba(255, 255, 255, 0.8);
     }
 }
