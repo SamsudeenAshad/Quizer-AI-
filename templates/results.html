@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-lg">
+            <div class="card-header bg-success text-white">
+                <h2 class="mb-0"><i class="fas fa-trophy"></i> Quiz Results</h2>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-4">
+                    <h1 class="display-4 text-primary">{{ score }}/{{ total }}</h1>
+                    <h3>
+                        {% set percentage = (score / total * 100) | round %}
+                        {% if percentage >= 80 %}
+                            <span class="text-success">Excellent! 🎉</span>
+                        {% elif percentage >= 60 %}
+                            <span class="text-warning">Good Job! 👍</span>
+                        {% else %}
+                            <span class="text-danger">Keep Practicing! 📚</span>
+                        {% endif %}
+                    </h3>
+                    <p class="lead">You scored {{ percentage }}%</p>
+                </div>
+
+                <div class="progress mb-4" style="height: 30px;">
+                    <div class="progress-bar 
+                        {% if percentage >= 80 %}bg-success
+                        {% elif percentage >= 60 %}bg-warning
+                        {% else %}bg-danger{% endif %}" 
+                        role="progressbar" 
+                        style="width: {{ percentage }}%"
+                        aria-valuenow="{{ percentage }}" 
+                        aria-valuemin="0" 
+                        aria-valuemax="100">
+                        {{ percentage }}%
+                    </div>
+                </div>
+
+                <!-- Detailed Results -->
+                <div class="text-start">
+                    <h4><i class="fas fa-list"></i> Detailed Results</h4>
+                    <div class="accordion" id="resultsAccordion">
+                        {% for answer in answers %}
+                        {% set i = loop.index0 %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading{{ i }}">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#collapse{{ i }}" 
+                                        aria-expanded="false" aria-controls="collapse{{ i }}">
+                                    <span class="me-2">
+                                        {% if answer.is_correct %}
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        {% else %}
+                                            <i class="fas fa-times-circle text-danger"></i>
+                                        {% endif %}
+                                    </span>
+                                    Question {{ loop.index }}: {{ answer.question[:60] }}...
+                                </button>
+                            </h2>
+                            <div id="collapse{{ i }}" class="accordion-collapse collapse" 
+                                 aria-labelledby="heading{{ i }}" data-bs-parent="#resultsAccordion">
+                                <div class="accordion-body">
+                                    <p><strong>Question:</strong> {{ answer.question }}</p>
+                                    <p><strong>Your Answer:</strong> 
+                                        <span class="{% if answer.is_correct %}text-success{% else %}text-danger{% endif %}">
+                                            {{ answer.selected }}
+                                        </span>
+                                    </p>
+                                    {% if not answer.is_correct %}
+                                    <p><strong>Correct Answer:</strong> 
+                                        <span class="text-success">{{ answer.correct }}</span>
+                                    </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-redo"></i> Take Another Quiz
+                    </a>
+                    <button class="btn btn-secondary btn-lg ms-2" onclick="window.print()">
+                        <i class="fas fa-print"></i> Print Results
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .btn, .navbar {
+        display: none !important;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,413 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-lg">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0"><i class="fas fa-brain"></i> Quizer AI - Create Your Quiz</h2>
+            </div>
+            <div class="card-body">
+                <!-- Step 1: Enter Title/Topic -->
+                <div id="step1" class="quiz-step">
+                    <h4><i class="fas fa-edit"></i> Step 1: Enter Quiz Title or Topic</h4>
+                    <div class="mb-3">
+                        <label for="quizTitle" class="form-label">Quiz Title/Topic</label>
+                        <input type="text" class="form-control" id="quizTitle" 
+                               placeholder="Enter your quiz title or topic (e.g., 'Python Programming', 'World History')">
+                    </div>
+                    <button class="btn btn-primary" onclick="nextStep(2)">
+                        <i class="fas fa-arrow-right"></i> Continue
+                    </button>
+                </div>
+
+                <!-- Step 2: Select Categories and Levels -->
+                <div id="step2" class="quiz-step d-none">
+                    <h4><i class="fas fa-list"></i> Step 2: Select Category and Level</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="category" class="form-label">Category</label>
+                            <select class="form-select" id="category" onchange="loadSubtopics()">
+                                <option value="">Select a category...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="level" class="form-label">Difficulty Level</label>
+                            <select class="form-select" id="level" onchange="loadSubtopics()">
+                                <option value="">Select level...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-secondary me-2" onclick="prevStep(1)">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </button>
+                        <button class="btn btn-primary" onclick="nextStep(3)">
+                            <i class="fas fa-arrow-right"></i> Continue
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Select Subtopics -->
+                <div id="step3" class="quiz-step d-none">
+                    <h4><i class="fas fa-tags"></i> Step 3: Select Subtopics to Include</h4>
+                    <div id="subtopicsContainer">
+                        <p class="text-muted">Please select a category and level first.</p>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-secondary me-2" onclick="prevStep(2)">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </button>
+                        <button class="btn btn-primary" onclick="nextStep(4)">
+                            <i class="fas fa-arrow-right"></i> Continue
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 4: Quiz Settings -->
+                <div id="step4" class="quiz-step d-none">
+                    <h4><i class="fas fa-cog"></i> Step 4: Quiz Settings</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="mcqCount" class="form-label">Number of Questions</label>
+                            <select class="form-select" id="mcqCount">
+                                <option value="5">5 Questions</option>
+                                <option value="10" selected>10 Questions</option>
+                                <option value="15">15 Questions</option>
+                                <option value="20">20 Questions</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <h5>Quiz Summary:</h5>
+                        <div id="quizSummary" class="bg-light p-3 rounded"></div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-secondary me-2" onclick="prevStep(3)">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </button>
+                        <button class="btn btn-success" onclick="startQuiz()">
+                            <i class="fas fa-play"></i> Start Quiz
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loading" class="d-none text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Generating your quiz questions...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quiz Interface -->
+<div id="quizInterface" class="d-none">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow-lg">
+                <div class="card-header bg-success text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0"><i class="fas fa-question-circle"></i> Quiz in Progress</h4>
+                        <span id="questionCounter" class="badge bg-light text-dark">Question 1 of 10</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="questionContainer">
+                        <!-- Question will be loaded here -->
+                    </div>
+                    
+                    <!-- Answer Result -->
+                    <div id="answerResult" class="d-none">
+                        <div class="alert" id="resultAlert">
+                            <h5 id="resultTitle"></h5>
+                            <p id="explanation"></p>
+                        </div>
+                        <button class="btn btn-primary" onclick="nextQuestion()">
+                            <i class="fas fa-arrow-right"></i> Next Question
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentStep = 1;
+let categories = {};
+let levels = [];
+let subtopics = [];
+let currentQuestionIndex = 0;
+let totalQuestions = 0;
+
+function nextStep(step) {
+    if (validateStep(currentStep)) {
+        document.getElementById(`step${currentStep}`).classList.add('d-none');
+        document.getElementById(`step${step}`).classList.remove('d-none');
+        currentStep = step;
+        
+        if (step === 2) {
+            loadCategoriesAndLevels();
+        } else if (step === 4) {
+            updateQuizSummary();
+        }
+    }
+}
+
+function prevStep(step) {
+    document.getElementById(`step${currentStep}`).classList.add('d-none');
+    document.getElementById(`step${step}`).classList.remove('d-none');
+    currentStep = step;
+}
+
+function validateStep(step) {
+    switch(step) {
+        case 1:
+            const title = document.getElementById('quizTitle').value.trim();
+            if (!title) {
+                alert('Please enter a quiz title or topic.');
+                return false;
+            }
+            return true;
+        case 2:
+            const category = document.getElementById('category').value;
+            const level = document.getElementById('level').value;
+            if (!category || !level) {
+                alert('Please select both category and level.');
+                return false;
+            }
+            return true;
+        case 3:
+            const selectedSubtopics = Array.from(document.querySelectorAll('input[name="subtopic"]:checked'));
+            if (selectedSubtopics.length === 0) {
+                alert('Please select at least one subtopic.');
+                return false;
+            }
+            return true;
+        default:
+            return true;
+    }
+}
+
+async function loadCategoriesAndLevels() {
+    try {
+        const response = await fetch('/get_categories', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                title: document.getElementById('quizTitle').value
+            })
+        });
+        
+        const data = await response.json();
+        categories = data.categories;
+        levels = data.levels;
+        
+        populateSelect('category', Object.keys(categories), 'Select a category...');
+        populateSelect('level', levels, 'Select level...');
+    } catch (error) {
+        console.error('Error loading categories:', error);
+    }
+}
+
+function populateSelect(selectId, options, placeholder) {
+    const select = document.getElementById(selectId);
+    select.innerHTML = `<option value="">${placeholder}</option>`;
+    options.forEach(option => {
+        select.innerHTML += `<option value="${option}">${option}</option>`;
+    });
+}
+
+async function loadSubtopics() {
+    const category = document.getElementById('category').value;
+    const level = document.getElementById('level').value;
+    
+    if (category && level) {
+        try {
+            const response = await fetch('/get_subtopics', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ category, level })
+            });
+            
+            const data = await response.json();
+            subtopics = data.subtopics;
+            
+            displaySubtopics(subtopics);
+        } catch (error) {
+            console.error('Error loading subtopics:', error);
+        }
+    }
+}
+
+function displaySubtopics(subtopics) {
+    const container = document.getElementById('subtopicsContainer');
+    container.innerHTML = '<p class="mb-3">Select the subtopics you want to include in your quiz:</p>';
+    
+    subtopics.forEach((subtopic, index) => {
+        container.innerHTML += `
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="subtopic" value="${subtopic}" id="subtopic${index}">
+                <label class="form-check-label" for="subtopic${index}">
+                    ${subtopic}
+                </label>
+            </div>
+        `;
+    });
+}
+
+function updateQuizSummary() {
+    const title = document.getElementById('quizTitle').value;
+    const category = document.getElementById('category').value;
+    const level = document.getElementById('level').value;
+    const mcqCount = document.getElementById('mcqCount').value;
+    const selectedSubtopics = Array.from(document.querySelectorAll('input[name="subtopic"]:checked'))
+        .map(cb => cb.value);
+    
+    document.getElementById('quizSummary').innerHTML = `
+        <strong>Title:</strong> ${title}<br>
+        <strong>Category:</strong> ${category}<br>
+        <strong>Level:</strong> ${level}<br>
+        <strong>Questions:</strong> ${mcqCount}<br>
+        <strong>Subtopics:</strong> ${selectedSubtopics.join(', ')}
+    `;
+}
+
+async function startQuiz() {
+    const title = document.getElementById('quizTitle').value;
+    const category = document.getElementById('category').value;
+    const level = document.getElementById('level').value;
+    const mcqCount = parseInt(document.getElementById('mcqCount').value);
+    const selectedSubtopics = Array.from(document.querySelectorAll('input[name="subtopic"]:checked'))
+        .map(cb => cb.value);
+    
+    // Show loading
+    document.querySelector('.card').classList.add('d-none');
+    document.getElementById('loading').classList.remove('d-none');
+    
+    try {
+        const response = await fetch('/start_quiz', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                title,
+                category,
+                level,
+                subtopics: selectedSubtopics,
+                mcq_count: mcqCount
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            totalQuestions = data.total_questions;
+            document.getElementById('loading').classList.add('d-none');
+            document.getElementById('quizInterface').classList.remove('d-none');
+            loadCurrentQuestion();
+        }
+    } catch (error) {
+        console.error('Error starting quiz:', error);
+        alert('Error starting quiz. Please try again.');
+    }
+}
+
+async function loadCurrentQuestion() {
+    try {
+        const response = await fetch('/get_question');
+        const data = await response.json();
+        
+        if (data.quiz_complete) {
+            window.location.href = '/quiz_results';
+            return;
+        }
+        
+        document.getElementById('questionCounter').textContent = 
+            `Question ${data.question_number} of ${data.total_questions}`;
+        
+        const questionHtml = `
+            <h5>${data.question.question}</h5>
+            <div class="mt-3">
+                ${data.question.options.map((option, index) => `
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="answer" 
+                               value="${String.fromCharCode(65 + index)}" id="option${index}">
+                        <label class="form-check-label" for="option${index}">
+                            ${String.fromCharCode(65 + index)}. ${option}
+                        </label>
+                    </div>
+                `).join('')}
+            </div>
+            <button class="btn btn-primary mt-3" onclick="submitAnswer()">
+                <i class="fas fa-check"></i> Submit Answer
+            </button>
+        `;
+        
+        document.getElementById('questionContainer').innerHTML = questionHtml;
+        document.getElementById('answerResult').classList.add('d-none');
+    } catch (error) {
+        console.error('Error loading question:', error);
+    }
+}
+
+async function submitAnswer() {
+    const selectedAnswer = document.querySelector('input[name="answer"]:checked');
+    
+    if (!selectedAnswer) {
+        alert('Please select an answer.');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/submit_answer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                answer: selectedAnswer.value
+            })
+        });
+        
+        const data = await response.json();
+        
+        // Show result
+        const resultAlert = document.getElementById('resultAlert');
+        const resultTitle = document.getElementById('resultTitle');
+        const explanation = document.getElementById('explanation');
+        
+        if (data.is_correct) {
+            resultAlert.className = 'alert alert-success';
+            resultTitle.innerHTML = '<i class="fas fa-check-circle"></i> Correct!';
+        } else {
+            resultAlert.className = 'alert alert-danger';
+            resultTitle.innerHTML = `<i class="fas fa-times-circle"></i> Incorrect. The correct answer is ${data.correct_answer}.`;
+        }
+        
+        explanation.textContent = data.explanation;
+        
+        document.getElementById('questionContainer').classList.add('d-none');
+        document.getElementById('answerResult').classList.remove('d-none');
+    } catch (error) {
+        console.error('Error submitting answer:', error);
+    }
+}
+
+function nextQuestion() {
+    document.getElementById('questionContainer').classList.remove('d-none');
+    loadCurrentQuestion();
+}
+</script>
+{% endblock %}
