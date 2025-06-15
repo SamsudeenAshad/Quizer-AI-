@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test to check AI response format for correct_answer
+Test to check AI response format for correct_answer with improved prompt
 """
 
 import os
@@ -18,7 +18,8 @@ if GEMINI_API_KEY:
     try:
         genai.configure(api_key=GEMINI_API_KEY)
         model = genai.GenerativeModel('gemini-1.5-flash')
-          print("--- Testing Question Generation Format ---")
+        
+        print("--- Testing Question Generation Format ---")
         prompt = """Create 1 multiple choice question about Python Programming at Beginner level.
 
 Return as JSON array only, no other text. IMPORTANT: correct_answer must be exactly "A", "B", "C", or "D":
@@ -54,17 +55,7 @@ Rules:
             question = questions[0]
             print(f"\nCorrect Answer from AI: '{question['correct_answer']}'")
             print(f"Type: {type(question['correct_answer'])}")
-            print(f"Length: {len(question['correct_answer'])}")
-            
-            # Test comparison
-            frontend_answer = "A"  # What frontend sends
-            ai_answer = question['correct_answer']
-            
-            print(f"\nComparison Test:")
-            print(f"Frontend sends: '{frontend_answer}' (type: {type(frontend_answer)})")
-            print(f"AI returns: '{ai_answer}' (type: {type(ai_answer)})")
-            print(f"Equal? {frontend_answer == ai_answer}")
-            print(f"Equal (case insensitive)? {frontend_answer.upper() == ai_answer.upper()}")
+            print(f"Is it A, B, C, or D? {question['correct_answer'] in ['A', 'B', 'C', 'D']}")
         
     except Exception as e:
         print(f"Error: {e}")

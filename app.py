@@ -33,7 +33,8 @@ CATEGORIES = {
     'Technology': ['Programming', 'AI/ML', 'Web Development', 'Cybersecurity'],
     'History': ['World History', 'Ancient Civilizations', 'Modern History', 'Wars'],
     'Literature': ['English Literature', 'World Literature', 'Poetry', 'Drama'],
-    'Geography': ['Physical Geography', 'Political Geography', 'Climate', 'Countries']
+    'Geography': ['Physical Geography', 'Political Geography', 'Climate', 'Countries'],
+    'Other': ['other topics', 'Miscellaneous', 'General Knowledge', 'Current Events']
 }
 
 LEVELS = ['Beginner', 'Intermediate', 'Advanced']
@@ -122,39 +123,50 @@ def generate_questions(config):
     count = config.get('mcq_count', 10)
     
     if not model:
-        raise Exception("AI service is not available. Please check your configuration.")
-    
-    # Include subtopics in the prompt for more targeted questions
+        raise Exception("AI service is not available. Please check your configuration.")    # Include subtopics in the prompt for more targeted questions
     subtopics_text = ", ".join(subtopics) if subtopics else ""
     if subtopics_text:
-        prompt = f"""Create {count} multiple choice questions about {title} in {category} at {level} level.
-Focus on these subtopics: {subtopics_text}
+        prompt = f"""Create {count} multiple choice questions about "{title}" at {level} level.
+Consider the category "{category}" and focus on these subtopics: {subtopics_text}
 
-Return as JSON array only, no other text:
+Return as JSON array only, no other text. IMPORTANT: correct_answer must be exactly "A", "B", "C", or "D":
 [
   {{
     "question": "Question text?",
-    "options": ["A option", "B option", "C option", "D option"],
+    "options": ["Option 1 text", "Option 2 text", "Option 3 text", "Option 4 text"],
     "correct_answer": "A",
     "explanation": "Why A is correct and others are wrong"
   }}
 ]
 
-Make sure each question is unique and educational."""
+Rules:
+- Each question must have exactly 4 options
+- Options should be just the text, no letters like "A)" or "B)"
+- correct_answer must be "A", "B", "C", or "D" only
+- Primary focus should be on the topic "{title}"
+- Use the category "{category}" and level "{level}" as guidance for difficulty and context
+- Make sure each question is unique and educational."""
     else:
-        prompt = f"""Create {count} multiple choice questions about {title} in {category} at {level} level.
+        prompt = f"""Create {count} multiple choice questions about "{title}" at {level} level.
+Consider the category "{category}" for context and difficulty.
 
-Return as JSON array only, no other text:
+Return as JSON array only, no other text. IMPORTANT: correct_answer must be exactly "A", "B", "C", or "D":
 [
   {{
     "question": "Question text?",
-    "options": ["A option", "B option", "C option", "D option"],
+    "options": ["Option 1 text", "Option 2 text", "Option 3 text", "Option 4 text"],
     "correct_answer": "A",
     "explanation": "Why A is correct and others are wrong"
   }}
 ]
 
-Make sure each question is unique and educational."""
+Rules:
+- Each question must have exactly 4 options
+- Options should be just the text, no letters like "A)" or "B)"
+- correct_answer must be "A", "B", "C", or "D" only
+- Primary focus should be on the topic "{title}"
+- Use the category "{category}" and level "{level}" as guidance for difficulty and context
+- Make sure each question is unique and educational."""
     
     print(f"Debug: Generating {count} questions for {title}")
     try:
@@ -170,8 +182,7 @@ Make sure each question is unique and educational."""
         
         questions = json.loads(response_text)
         print(f"Debug: Successfully parsed {len(questions)} questions")
-        
-        # Validate the structure
+          # Validate the structure
         if isinstance(questions, list) and len(questions) > 0:
             valid_questions = []
             for q in questions:
@@ -179,6 +190,28 @@ Make sure each question is unique and educational."""
                     'question' in q and 'options' in q and 
                     'correct_answer' in q and 'explanation' in q and
                     isinstance(q['options'], list) and len(q['options']) == 4):
+                    
+                    # Fix correct_answer if it's not A, B, C, D
+                    correct_answer = q['correct_answer'].strip()
+                    if correct_answer not in ['A', 'B', 'C', 'D']:
+                        # Find which option matches the correct answer text
+                        for i, option in enumerate(q['options']):
+                            if option.strip().lower() == correct_answer.lower():
+                                q['correct_answer'] = chr(65 + i)  # Convert to A, B, C, D
+                                print(f"Debug: Fixed question - converted '{correct_answer}' to '{q['correct_answer']}'")
+                                break
+                        else:
+                            # If no exact match, try partial matching
+                            for i, option in enumerate(q['options']):
+                                if correct_answer.lower() in option.strip().lower():
+                                    q['correct_answer'] = chr(65 + i)
+                                    print(f"Debug: Partial fix - converted '{correct_answer}' to '{q['correct_answer']}'")
+                                    break
+                            else:
+                                # Skip this question if we can't fix it
+                                print(f"Debug: Skipping invalid question - can't match '{correct_answer}' to options: {q['options']}")
+                                continue
+                    
                     valid_questions.append(q)
             
             if len(valid_questions) > 0:
@@ -231,7 +264,38 @@ def submit_answer():
     current_q = quiz_config['current_question']
     question = questions[current_q]
     
-    is_correct = selected_answer == question['correct_answer']
+    # Debug logging for answer validation
+    print(f"Debug: Question: {question['question'][:50]}...")
+    print(f"Debug: Options: {question['options']}")
+    print(f"Debug: AI correct_answer: '{question['correct_answer']}'")
+    print(f"Debug: User selected: '{selected_answer}'")
+      # Check if AI returned the option text instead of letter
+    correct_answer = question['correct_answer'].strip()
+    
+    # If the correct answer is not A, B, C, or D, try to find the matching option
+    if correct_answer not in ['A', 'B', 'C', 'D']:
+        # Find which option matches the correct answer text
+        for i, option in enumerate(question['options']):
+            if option.strip().lower() == correct_answer.lower():
+                correct_answer = chr(65 + i)  # Convert index to A, B, C, D
+                print(f"Debug: Converted correct answer from '{question['correct_answer']}' to '{correct_answer}'")
+                break
+        else:
+            # If no exact match, try partial matching
+            for i, option in enumerate(question['options']):
+                if correct_answer.lower() in option.strip().lower() or option.strip().lower() in correct_answer.lower():
+                    correct_answer = chr(65 + i)
+                    print(f"Debug: Partial match - converted correct answer to '{correct_answer}'")
+                    break
+            else:
+                # If still no match, default to A and log the issue
+                print(f"Debug: WARNING - Could not match '{question['correct_answer']}' to any option. Defaulting to A.")
+                print(f"Debug: Available options: {question['options']}")
+                correct_answer = 'A'
+    
+    is_correct = selected_answer == correct_answer
+    
+    print(f"Debug: Final comparison - User: '{selected_answer}' vs Correct: '{correct_answer}' = {is_correct}")
     
     if is_correct:
         quiz_config['score'] += 1
@@ -239,7 +303,7 @@ def submit_answer():
     quiz_config['answers'].append({
         'question': question['question'],
         'selected': selected_answer,
-        'correct': question['correct_answer'],
+        'correct': correct_answer,  # Store the normalized correct answer
         'is_correct': is_correct
     })
     
@@ -249,7 +313,7 @@ def submit_answer():
     return jsonify({
         'is_correct': is_correct,
         'explanation': question['explanation'],
-        'correct_answer': question['correct_answer']
+        'correct_answer': correct_answer  # Return the normalized correct answer
     })
 
 @app.route('/quiz_results')

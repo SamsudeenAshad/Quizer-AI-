@@ -7,14 +7,14 @@
             <div class="card-header bg-primary text-white">
                 <h2 class="mb-0"><i class="fas fa-brain"></i> Quizer AI - Create Your Quiz</h2>
             </div>
-            <div class="card-body">
-                <!-- Step 1: Enter Title/Topic -->
+            <div class="card-body">                <!-- Step 1: Enter Title/Topic -->
                 <div id="step1" class="quiz-step">
-                    <h4><i class="fas fa-edit"></i> Step 1: Enter Quiz Title or Topic</h4>
+                    <h4><i class="fas fa-edit"></i> Step 1: Enter Your Main Topic</h4>
                     <div class="mb-3">
-                        <label for="quizTitle" class="form-label">Quiz Title/Topic</label>
+                        <label for="quizTitle" class="form-label">Quiz Topic</label>
                         <input type="text" class="form-control" id="quizTitle" 
-                               placeholder="Enter your quiz title or topic (e.g., 'Python Programming', 'World History')">
+                               placeholder="Enter your main topic (e.g., 'Python Programming', 'World War II', 'Machine Learning')">
+                        <div class="form-text">This will be the primary focus of your quiz questions.</div>
                     </div>
                     <button class="btn btn-primary" onclick="nextStep(2)">
                         <i class="fas fa-arrow-right"></i> Continue
@@ -23,19 +23,25 @@
 
                 <!-- Step 2: Select Categories and Levels -->
                 <div id="step2" class="quiz-step d-none">
-                    <h4><i class="fas fa-list"></i> Step 2: Select Category and Level</h4>
+                    <h4><i class="fas fa-list"></i> Step 2: Select Category and Difficulty Level</h4>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        The category and level help determine the style and difficulty of questions, but your main topic from Step 1 is the primary focus.
+                    </div>
                     <div class="row">
                         <div class="col-md-6">
-                            <label for="category" class="form-label">Category</label>
+                            <label for="category" class="form-label">Category (for context)</label>
                             <select class="form-select" id="category" onchange="loadSubtopics()">
                                 <option value="">Select a category...</option>
                             </select>
+                            <div class="form-text">Choose the closest category to help generate relevant subtopics.</div>
                         </div>
                         <div class="col-md-6">
                             <label for="level" class="form-label">Difficulty Level</label>
                             <select class="form-select" id="level" onchange="loadSubtopics()">
                                 <option value="">Select level...</option>
                             </select>
+                            <div class="form-text">This determines how challenging the questions will be.</div>
                         </div>
                     </div>
                     <div class="mt-3">
@@ -46,11 +52,13 @@
                             <i class="fas fa-arrow-right"></i> Continue
                         </button>
                     </div>
-                </div>
-
-                <!-- Step 3: Select Subtopics -->
+                </div>                <!-- Step 3: Select Subtopics -->
                 <div id="step3" class="quiz-step d-none">
-                    <h4><i class="fas fa-tags"></i> Step 3: Select Subtopics to Include</h4>
+                    <h4><i class="fas fa-tags"></i> Step 3: Choose Specific Areas to Focus On</h4>
+                    <div class="alert alert-info">
+                        <i class="fas fa-lightbulb"></i> 
+                        AI has generated subtopics related to your main topic. Select the areas you want your quiz to cover.
+                    </div>
                     <div id="subtopicsContainer">
                         <p class="text-muted">Please select a category and level first.</p>
                     </div>
@@ -62,11 +70,9 @@
                             <i class="fas fa-arrow-right"></i> Continue
                         </button>
                     </div>
-                </div>
-
-                <!-- Step 4: Quiz Settings -->
+                </div>                <!-- Step 4: Quiz Settings -->
                 <div id="step4" class="quiz-step d-none">
-                    <h4><i class="fas fa-cog"></i> Step 4: Quiz Settings</h4>
+                    <h4><i class="fas fa-cog"></i> Step 4: Final Quiz Settings</h4>
                     <div class="row">
                         <div class="col-md-6">
                             <label for="mcqCount" class="form-label">Number of Questions</label>
@@ -79,7 +85,7 @@
                         </div>
                     </div>
                     <div class="mt-4">
-                        <h5>Quiz Summary:</h5>
+                        <h5>Quiz Configuration Summary:</h5>
                         <div id="quizSummary" class="bg-light p-3 rounded"></div>
                     </div>
                     <div class="mt-3">
@@ -286,11 +292,17 @@ function updateQuizSummary() {
         .map(cb => cb.value);
     
     document.getElementById('quizSummary').innerHTML = `
-        <strong>Title:</strong> ${title}<br>
-        <strong>Category:</strong> ${category}<br>
-        <strong>Level:</strong> ${level}<br>
-        <strong>Questions:</strong> ${mcqCount}<br>
-        <strong>Subtopics:</strong> ${selectedSubtopics.join(', ')}
+        <strong>Main Topic:</strong> ${title}<br>
+        <strong>Category Context:</strong> ${category}<br>
+        <strong>Difficulty Level:</strong> ${level}<br>
+        <strong>Number of Questions:</strong> ${mcqCount}<br>
+        <strong>Focus Areas:</strong> ${selectedSubtopics.join(', ')}<br>
+        <br>
+        <small class="text-muted">
+            <i class="fas fa-info-circle"></i> 
+            Questions will be primarily about "${title}" with ${level.toLowerCase()} difficulty, 
+            using "${category}" context and focusing on the selected areas above.
+        </small>
     `;
 }
 
