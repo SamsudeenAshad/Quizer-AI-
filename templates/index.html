@@ -155,6 +155,8 @@
 
 {% block scripts %}
 <script>
+console.log('JavaScript is loading...');
+
 let currentStep = 1;
 let categories = {};
 let levels = [];
@@ -290,9 +292,9 @@ async function loadCategoriesAndLevels() {
         
         populateSelect('category', Object.keys(categories), 'Select a category...');
         populateSelect('level', levels, 'Select level...');
-        
-        console.log('Dropdowns populated successfully');
-    } catch (error) {        console.error('Error loading categories:', error);
+          console.log('Dropdowns populated successfully');
+    } catch (error) {
+        console.error('Error loading categories:', error);
         // Show user-friendly error and load fallback data
         const categorySelect = document.getElementById('category');
         const levelSelect = document.getElementById('level');
@@ -319,10 +321,8 @@ function loadFallbackData() {
     
     categories = fallbackCategories;
     levels = fallbackLevels;
-    
-    populateSelect('category', Object.keys(fallbackCategories), 'Select a category...');
+      populateSelect('category', Object.keys(fallbackCategories), 'Select a category...');
     populateSelect('level', fallbackLevels, 'Select level...');
-    }
 }
 
 function populateSelect(selectId, options, placeholder) {
