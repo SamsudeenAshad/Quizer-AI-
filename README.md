@@ -257,4 +257,4 @@ If you encounter any issues:
 
 **Made with ❤️ using Flask and Google Gemini AI**
 
-*Last updated: June 15, 2025*
+*Last updated: July 1, 2025*
