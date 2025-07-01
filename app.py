@@ -322,10 +322,20 @@ def quiz_results():
     if not quiz_config:
         return redirect(url_for('index'))
     
+    # Get data with defaults to prevent errors
+    score = quiz_config.get('score', 0)
+    questions = session.get('questions', [])
+    total = len(questions)
+    answers = quiz_config.get('answers', [])
+    
+    # Ensure we have valid data
+    if total == 0:
+        return redirect(url_for('index'))
+    
     return render_template('results.html', 
-                         score=quiz_config['score'],
-                         total=len(session.get('questions', [])),
-                         answers=quiz_config['answers'])
+                         score=score,
+                         total=total,
+                         answers=answers)
 
 @app.route('/favicon.ico')
 def favicon():

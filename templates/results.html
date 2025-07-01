@@ -14,7 +14,7 @@
                         <div class="score-inner">
                             <h1 class="display-4 score-number" data-score="{{ score }}" data-total="{{ total }}">0/{{ total }}</h1>
                             <div class="score-percentage">
-                                {% set percentage = (score / total * 100) | round %}
+                                {% set percentage = (score / total * 100) | round if total > 0 else 0 %}
                                 <span class="percentage-number" data-percentage="{{ percentage }}">0</span>%
                             </div>
                         </div>
@@ -94,7 +94,7 @@
                                             {% endif %}
                                         </span>
                                         <span class="question-number">Q{{ loop.index }}</span>
-                                        <span class="question-preview">{{ answer.question[:60] }}...</span>
+                                        <span class="question-preview">{{ (answer.question or 'Question')[:60] }}{% if (answer.question or '') | length > 60 %}...{% endif %}</span>
                                     </div>
                                 </button>
                             </h2>
@@ -102,17 +102,17 @@
                                  aria-labelledby="heading{{ i }}" data-bs-parent="#resultsAccordion">
                                 <div class="accordion-body">
                                     <div class="question-detail">
-                                        <p class="question-text"><strong>Question:</strong> {{ answer.question }}</p>
+                                        <p class="question-text"><strong>Question:</strong> {{ answer.question or 'Question not available' }}</p>
                                         <p class="answer-text">
                                             <strong>Your Answer:</strong> 
                                             <span class="answer-value {% if answer.is_correct %}text-success{% else %}text-danger{% endif %}">
-                                                {{ answer.selected }}
+                                                {{ answer.selected or 'No answer selected' }}
                                             </span>
                                         </p>
                                         {% if not answer.is_correct %}
                                         <p class="correct-answer-text">
                                             <strong>Correct Answer:</strong> 
-                                            <span class="correct-value text-success">{{ answer.correct }}</span>
+                                            <span class="correct-value text-success">{{ answer.correct or 'Not available' }}</span>
                                         </p>
                                         {% endif %}
                                     </div>
@@ -139,7 +139,9 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     animateResults();
@@ -166,12 +168,18 @@ function animateScore() {
     const percentageElement = document.querySelector('.percentage-number');
     
     if (scoreElement && percentageElement) {
-        const finalScore = parseInt(scoreElement.dataset.score);
-        const finalTotal = parseInt(scoreElement.dataset.total);
-        const finalPercentage = parseInt(percentageElement.dataset.percentage);
+        const finalScore = parseInt(scoreElement.dataset.score) || 0;
+        const finalTotal = parseInt(scoreElement.dataset.total) || 1;
+        const finalPercentage = parseInt(percentageElement.dataset.percentage) || 0;
         
-        animateCounter(scoreElement, 0, finalScore, 1500, (current) => `${current}/${finalTotal}`);
-        animateCounter(percentageElement, 0, finalPercentage, 1500);
+        // Prevent division by zero
+        if (finalTotal > 0) {
+            animateCounter(scoreElement, 0, finalScore, 1500, (current) => `${current}/${finalTotal}`);
+            animateCounter(percentageElement, 0, finalPercentage, 1500);
+        } else {
+            scoreElement.textContent = `0/0`;
+            percentageElement.textContent = '0';
+        }
     }
 }
 
@@ -616,6 +624,4 @@ function showNotification(message) {
     }
 }
 </style>
-
-{% endblock %}
 {% endblock %}
